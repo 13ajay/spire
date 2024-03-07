@@ -85,9 +85,10 @@ func (c *Cache) UpdateEntries(update *cache.UpdateEntries, checkSVID func(*commo
     // Update trust anchor ARN
     if c.trustAnchorARN == nil {
         c.c.Log.WithField(telemetry.TrustDomainID, c.c.TrustDomain).Debug("Trust anchor ARN added")
-        c.c.Log.WithField(telemetry.TrustDomainID, c.c.TrustDomain).Debug(c.trustAnchorARN)
+        c.c.Log.WithField(telemetry.TrustDomainID, c.c.TrustDomain).Debug(update.TrustAnchorARN)
     } else if c.trustAnchorARN != update.TrustAnchorARN {
         c.c.Log.WithField(telemetry.TrustDomainID, c.c.TrustDomain).Debug("Trust anchor ARN updated")
+        c.c.Log.WithField(telemetry.TrustDomainID, c.c.TrustDomain).Debug(*c.trustAnchorARN)
     }
     c.trustAnchorARN = update.TrustAnchorARN
 
