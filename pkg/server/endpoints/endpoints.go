@@ -23,6 +23,7 @@ import (
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	agentv1 "github.com/spiffe/spire-api-sdk/proto/spire/api/server/agent/v1"
 	bundlev1 "github.com/spiffe/spire-api-sdk/proto/spire/api/server/bundle/v1"
+	bootstrapv1 "github.com/spiffe/spire-api-sdk/proto/spire/api/server/bootstrap/v1"
 	debugv1_pb "github.com/spiffe/spire-api-sdk/proto/spire/api/server/debug/v1"
 	entryv1 "github.com/spiffe/spire-api-sdk/proto/spire/api/server/entry/v1"
 	svidv1 "github.com/spiffe/spire-api-sdk/proto/spire/api/server/svid/v1"
@@ -83,6 +84,7 @@ type Endpoints struct {
 type APIServers struct {
 	AgentServer       agentv1.AgentServer
 	BundleServer      bundlev1.BundleServer
+    BootstrapServer bootstrapv1.BootstrapServer
 	DebugServer       debugv1_pb.DebugServer
 	EntryServer       entryv1.EntryServer
 	HealthServer      grpc_health_v1.HealthServer
@@ -180,6 +182,8 @@ func (e *Endpoints) ListenAndServe(ctx context.Context) error {
 	agentv1.RegisterAgentServer(udsServer, e.APIServers.AgentServer)
 	bundlev1.RegisterBundleServer(tcpServer, e.APIServers.BundleServer)
 	bundlev1.RegisterBundleServer(udsServer, e.APIServers.BundleServer)
+	bootstrapv1.RegisterBootstrapServer(tcpServer, e.APIServers.BootstrapServer)
+	bootstrapv1.RegisterBootstrapServer(udsServer, e.APIServers.BootstrapServer)
 	entryv1.RegisterEntryServer(tcpServer, e.APIServers.EntryServer)
 	entryv1.RegisterEntryServer(udsServer, e.APIServers.EntryServer)
 	svidv1.RegisterSVIDServer(tcpServer, e.APIServers.SVIDServer)

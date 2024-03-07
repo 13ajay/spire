@@ -14,6 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	agentv1 "github.com/spiffe/spire-api-sdk/proto/spire/api/server/agent/v1"
+	bootstrapv1 "github.com/spiffe/spire-api-sdk/proto/spire/api/server/bootstrap/v1"
 	bundlev1 "github.com/spiffe/spire-api-sdk/proto/spire/api/server/bundle/v1"
 	entryv1 "github.com/spiffe/spire-api-sdk/proto/spire/api/server/entry/v1"
 	svidv1 "github.com/spiffe/spire-api-sdk/proto/spire/api/server/svid/v1"
@@ -198,6 +199,13 @@ func (c *client) SyncUpdates(ctx context.Context, cachedEntries map[string]*comm
 			federatedTrustDomains.Add(federatesWith)
 		}
 	}
+
+    trustAnchorARN, err := c.fetchTrustAnchorARN(ctx)
+    if err != nil {
+        return SyncStats{}, err
+    }
+    msg := fmt.Sprintf("Received trust anchor ARN: %s", trustAnchorARN)
+    c.c.Log.Info(msg)
 
 	protoBundles, err := c.fetchBundles(ctx, federatedTrustDomains.Sorted())
 	if err != nil {
@@ -574,6 +582,24 @@ func (c *client) streamAndSyncEntries(ctx context.Context, entryClient entryv1.E
 	return stats, nil
 }
 
+func (c *client) fetchTrustAnchorARN(ctx context.Context) (string, error) {
+    bootstrapClient, connection, err := c.newBootstrapClient(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer connection.Release()
+
+    // Get Trust Anchor ARN
+    trustAnchorARN, err := bootstrapClient.GetTrustAnchorARN(ctx, &bootstrapv1.GetTrustAnchorARNRequest{})
+	if err != nil {
+		c.release(connection)
+		c.withErrorFields(err).Error("Failed to fetch trust anchor ARN")
+		return "", fmt.Errorf("failed to fetch trust anchor ARN: %w", err)
+	}
+
+    return trustAnchorARN.GetTrustAnchorArn(), nil
+}
+
 func (c *client) fetchBundles(ctx context.Context, federatedBundles []string) ([]*types.Bundle, error) {
 	bundleClient, connection, err := c.newBundleClient(ctx)
 	if err != nil {
@@ -662,6 +688,14 @@ func (c *client) newBundleClient(ctx context.Context) (bundlev1.BundleClient, *n
 		return nil, nil, err
 	}
 	return bundlev1.NewBundleClient(conn.Conn()), conn, nil
+}
+
+func (c *client) newBootstrapClient(ctx context.Context) (bootstrapv1.BootstrapClient, *nodeConn, error) {
+	conn, err := c.getOrOpenConn(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	return bootstrapv1.NewBootstrapClient(conn.Conn()), conn, nil
 }
 
 func (c *client) newSVIDClient(ctx context.Context) (svidv1.SVIDClient, *nodeConn, error) {

@@ -17,6 +17,7 @@ import (
 	"github.com/spiffe/spire/pkg/server/api"
 	agentv1 "github.com/spiffe/spire/pkg/server/api/agent/v1"
 	bundlev1 "github.com/spiffe/spire/pkg/server/api/bundle/v1"
+	bootstrapv1 "github.com/spiffe/spire/pkg/server/api/bootstrap/v1"
 	debugv1 "github.com/spiffe/spire/pkg/server/api/debug/v1"
 	entryv1 "github.com/spiffe/spire/pkg/server/api/entry/v1"
 	healthv1 "github.com/spiffe/spire/pkg/server/api/health/v1"
@@ -141,6 +142,9 @@ func (c *Config) makeAPIServers(entryFetcher api.AuthorizedEntryFetcher) APIServ
 			DataStore:         ds,
 			UpstreamPublisher: upstreamPublisher,
 		}),
+        BootstrapServer: bootstrapv1.New(bootstrapv1.Config{
+            TrustDomain: c.TrustDomain, 
+        }),
 		DebugServer: debugv1.New(debugv1.Config{
 			TrustDomain:  c.TrustDomain,
 			Clock:        c.Clock,
