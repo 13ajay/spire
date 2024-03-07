@@ -109,6 +109,8 @@ type LRUCache struct {
 	// svidCacheMaxSize is a soft limit of max number of SVIDs that would be stored in cache
 	svidCacheMaxSize   int
 	subscribeBackoffFn func() backoff.BackOff
+
+    trustAnchorARN *string
 }
 
 func NewLRUCache(log logrus.FieldLogger, trustDomain spiffeid.TrustDomain, bundle *Bundle, metrics telemetry.Metrics,
@@ -227,6 +229,14 @@ func (c *LRUCache) UpdateEntries(update *UpdateEntries, checkSVID func(*common.R
 	c.mu.Lock()
 	defer func() { agentmetrics.SetEntriesMapSize(c.metrics, c.CountRecords()) }()
 	defer c.mu.Unlock()
+
+    // Update trust anchor ARN
+    if c.trustAnchorARN == nil {
+        c.log.WithField(telemetry.TrustDomainID, c.trustDomain).Debug("Trust anchor ARN added")
+    } else if c.trustAnchorARN != update.TrustAnchorARN {
+        c.log.WithField(telemetry.TrustDomainID, c.trustDomain).Debug("Trust anchor ARN updated")
+    }
+    c.trustAnchorARN = update.TrustAnchorARN
 
 	// Remove bundles that no longer exist. The bundle for the agent trust
 	// domain should NOT be removed even if not present (which should only be

@@ -60,6 +60,8 @@ type Cache struct {
 
 	// staleEntries holds stale registration entries
 	staleEntries map[string]bool
+
+    trustAnchorARN *string
 }
 
 func New(config *Config) *Cache {
@@ -79,6 +81,14 @@ func New(config *Config) *Cache {
 func (c *Cache) UpdateEntries(update *cache.UpdateEntries, checkSVID func(*common.RegistrationEntry, *common.RegistrationEntry, *cache.X509SVID) bool) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
+
+    // Update trust anchor ARN
+    if c.trustAnchorARN == nil {
+        c.c.Log.WithField(telemetry.TrustDomainID, c.c.TrustDomain).Debug("Trust anchor ARN added")
+    } else if c.trustAnchorARN != update.TrustAnchorARN {
+        c.c.Log.WithField(telemetry.TrustDomainID, c.c.TrustDomain).Debug("Trust anchor ARN updated")
+    }
+    c.trustAnchorARN = update.TrustAnchorARN
 
 	// Remove bundles that no longer exist. The bundle for the agent trust
 	// domain should NOT be removed even if not present (which should only be

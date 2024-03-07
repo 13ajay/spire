@@ -73,7 +73,7 @@ type SyncBundlesStats struct {
 
 type Client interface {
 	FetchUpdates(ctx context.Context) (*Update, error)
-	SyncUpdates(ctx context.Context, cachedEntries map[string]*common.RegistrationEntry, cachedBundles map[string]*common.Bundle) (SyncStats, error)
+	SyncUpdates(ctx context.Context, cachedEntries map[string]*common.RegistrationEntry, cachedBundles map[string]*common.Bundle, cachedTrustAnchorARN *string) (SyncStats, error)
 	RenewSVID(ctx context.Context, csr []byte) (*X509SVID, error)
 	NewX509SVIDs(ctx context.Context, csrs map[string][]byte) (map[string]*X509SVID, error)
 	NewJWTSVID(ctx context.Context, entryID string, audience []string) (*JWTSVID, error)
@@ -174,7 +174,7 @@ func (c *client) FetchUpdates(ctx context.Context) (*Update, error) {
 	}, nil
 }
 
-func (c *client) SyncUpdates(ctx context.Context, cachedEntries map[string]*common.RegistrationEntry, cachedBundles map[string]*common.Bundle) (SyncStats, error) {
+func (c *client) SyncUpdates(ctx context.Context, cachedEntries map[string]*common.RegistrationEntry, cachedBundles map[string]*common.Bundle, cachedTrustAnchorARN *string) (SyncStats, error) {
 	switch {
 	case cachedEntries == nil:
 		return SyncStats{}, errors.New("non-nil cached entries map is required")
@@ -206,6 +206,7 @@ func (c *client) SyncUpdates(ctx context.Context, cachedEntries map[string]*comm
     }
     msg := fmt.Sprintf("Received trust anchor ARN: %s", trustAnchorARN)
     c.c.Log.Info(msg)
+    cachedTrustAnchorARN = &trustAnchorARN
 
 	protoBundles, err := c.fetchBundles(ctx, federatedTrustDomains.Sorted())
 	if err != nil {

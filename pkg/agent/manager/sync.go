@@ -237,7 +237,7 @@ func (m *manager) fetchEntries(ctx context.Context) (_ *cache.UpdateEntries, _ *
 
 	var update *client.Update
 	if m.c.UseSyncAuthorizedEntries {
-		stats, err := m.client.SyncUpdates(ctx, m.syncedEntries, m.syncedBundles)
+		stats, err := m.client.SyncUpdates(ctx, m.syncedEntries, m.syncedBundles, m.trustAnchorARN)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -245,6 +245,7 @@ func (m *manager) fetchEntries(ctx context.Context) (_ *cache.UpdateEntries, _ *
 		update = &client.Update{
 			Entries: m.syncedEntries,
 			Bundles: m.syncedBundles,
+            TrustAnchorARN: m.trustAnchorARN, 
 		}
 	} else {
 		update, err = m.client.FetchUpdates(ctx)
@@ -276,6 +277,7 @@ func (m *manager) fetchEntries(ctx context.Context) (_ *cache.UpdateEntries, _ *
 		}, &cache.UpdateEntries{
 			Bundles:             bundles,
 			RegistrationEntries: storeEntries,
+            TrustAnchorARN: m.trustAnchorARN, 
 		}, nil
 }
 

@@ -162,6 +162,8 @@ type manager struct {
 	// cache.
 	syncedEntries map[string]*common.RegistrationEntry
 	syncedBundles map[string]*common.Bundle
+
+    trustAnchorARN *string
 }
 
 func (m *manager) Initialize(ctx context.Context) error {

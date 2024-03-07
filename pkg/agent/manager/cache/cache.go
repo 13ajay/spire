@@ -44,6 +44,8 @@ type UpdateEntries struct {
 	// RegistrationEntries is a set of ALL registration entries available to the
 	// agent, keyed by registration entry id.
 	RegistrationEntries map[string]*common.RegistrationEntry
+
+    TrustAnchorARN *string
 }
 
 // Update holds information for an SVIDs update to the cache.
@@ -120,6 +122,8 @@ type Cache struct {
 
 	// bundles holds the trust bundles, keyed by trust domain id (i.e. "spiffe://domain.test")
 	bundles map[spiffeid.TrustDomain]*spiffebundle.Bundle
+
+    trustAnchorARN *string
 }
 
 // StaleEntry holds stale entries with SVIDs expiration time
@@ -213,6 +217,16 @@ func (c *Cache) SubscribeToWorkloadUpdates(_ context.Context, selectors Selector
 func (c *Cache) UpdateEntries(update *UpdateEntries, checkSVID func(*common.RegistrationEntry, *common.RegistrationEntry, *X509SVID) bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+    c.log.WithField(telemetry.TrustDomainID, c.trustDomain).Debug("Begin UpdateEntries")
+
+    // Update trust anchor ARN
+    if c.trustAnchorARN == nil {
+        c.log.WithField(telemetry.TrustDomainID, c.trustDomain).Debug("Trust anchor ARN added")
+    } else if c.trustAnchorARN != update.TrustAnchorARN {
+        c.log.WithField(telemetry.TrustDomainID, c.trustDomain).Debug("Trust anchor ARN updated")
+    }
+    c.trustAnchorARN = update.TrustAnchorARN
 
 	// Remove bundles that no longer exist. The bundle for the agent trust
 	// domain should NOT be removed even if not present (which should only be
@@ -376,6 +390,8 @@ func (c *Cache) UpdateEntries(update *UpdateEntries, checkSVID func(*common.Regi
 	} else {
 		c.notifyBySelectorSet(notifySets...)
 	}
+
+    c.log.WithField(telemetry.TrustDomainID, c.trustDomain).Debug("End UpdateEntries")
 }
 
 func (c *Cache) UpdateSVIDs(update *UpdateSVIDs) {
