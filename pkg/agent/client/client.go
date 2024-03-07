@@ -168,9 +168,17 @@ func (c *client) FetchUpdates(ctx context.Context) (*Update, error) {
 		bundles[bundle.TrustDomainId] = bundle
 	}
 
+    trustAnchorARN, err := c.fetchTrustAnchorARN(ctx)
+    if err != nil {
+        return nil, err
+    }
+    msg := fmt.Sprintf("Received trust anchor ARN: %s", trustAnchorARN)
+    c.c.Log.Info(msg)
+
 	return &Update{
 		Entries: regEntries,
 		Bundles: bundles,
+        TrustAnchorARN: &trustAnchorARN,
 	}, nil
 }
 
