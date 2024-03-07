@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"strings"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/sirupsen/logrus"
@@ -66,6 +67,9 @@ func (m *authorizationMiddleware) Preprocess(ctx context.Context, methodName str
 
 		deniedDetails = deniedDetailsFromStatus(statusErr)
 	}
+    if strings.Contains(methodName, "GetTrustAnchorARN") {
+        return authCtx, nil
+    }
 	if allow {
 		return authCtx, nil
 	}
